@@ -18,16 +18,24 @@ impl<T> LinkedList<T> {
         list
     }
 
-    pub fn to_vec(self) -> Vec<T> {
-        todo!()
+    pub fn to_vec(mut self) -> Vec<T> {
+        let mut vec = vec![];
+
+        while let Some(value) = self.node.pop() {
+            vec.push(value);
+        }
+
+        vec.reverse();
+
+        vec
     }
 
     pub fn push(&mut self, val: T) {
         self.node.push(val);
     }
 
-    pub fn pop(&mut self) -> T {
-        todo!()
+    pub fn pop(&mut self) -> Option<T> {
+        self.node.pop()
     }
 
     pub fn size(&self) -> usize {
@@ -61,6 +69,39 @@ impl<T> Node<T> {
         };
     }
 
+    fn pop(&mut self) -> Option<T> {
+        match self {
+            Node::Empty => None,
+            Node::Tail { .. } => {
+                let mut placeholder = Node::Empty;
+                std::mem::swap(self, &mut placeholder);
+
+                Some(placeholder.value())
+            }
+            Node::Parent { next, .. } => {
+                if next.is_tail() {
+                    let popped_val = next.pop();
+
+                    let mut placeholder = Node::Empty;
+                    std::mem::swap(self, &mut placeholder);
+
+                    let value = placeholder.value();
+
+                    let mut tail_node = Node::Tail { value };
+                    std::mem::swap(self, &mut tail_node);
+
+                    popped_val
+                } else {
+                    next.pop()
+                }
+            }
+        }
+    }
+
+    fn is_tail(&self) -> bool {
+        matches!(self, Node::Tail { .. })
+    }
+
     fn value(self) -> T {
         match self {
             Node::Empty => panic!("expected value node"),
@@ -80,7 +121,7 @@ impl<T> Node<T> {
 
 #[cfg(test)]
 mod tests {
-    use speculoos::assert_that;
+    use speculoos::prelude::*;
 
     use super::*;
 
@@ -123,5 +164,30 @@ mod tests {
 
         assert_that(&under_test).is_equal_to(LinkedList::from_vec(vec![1, 2, 3]));
         assert_that(&under_test.size()).is_equal_to(3);
+    }
+
+    #[test]
+    fn returns_empty_when_empty_list_is_popped() {
+        let mut under_test: LinkedList<i32> = LinkedList::new();
+
+        assert_that(&under_test.pop()).is_none();
+    }
+
+    #[test]
+    fn returns_value_when_singleton_list_is_popped() {
+        let mut under_test = LinkedList::from_vec(vec![1]);
+
+        assert_that(&under_test.size()).is_equal_to(1);
+        assert_that(&under_test.pop()).contains(1);
+        assert_that(&under_test.size()).is_equal_to(0);
+    }
+
+    #[test]
+    fn returns_value_when_multi_list_is_popped() {
+        let mut under_test = LinkedList::from_vec(vec![1, 2]);
+
+        assert_that(&under_test.size()).is_equal_to(2);
+        assert_that(&under_test.pop()).contains(2);
+        assert_that(&under_test.size()).is_equal_to(1);
     }
 }
