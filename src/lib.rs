@@ -1,5 +1,3 @@
-extern crate core;
-
 #[derive(Debug, Eq, PartialEq)]
 pub struct LinkedList<T> {
     node: Node<T>,
