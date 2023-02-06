@@ -32,6 +32,10 @@ impl<T> LinkedList<T> {
         self.node.push(val);
     }
 
+    pub fn push_front(&mut self, val: T) {
+        self.node.push_front(val);
+    }
+
     pub fn pop(&mut self) -> Option<T> {
         self.node.pop()
     }
@@ -54,6 +58,20 @@ impl<T> Node<T> {
             Node::Empty => *self = Node::Tail { value: val },
             Node::Tail { .. } => self.to_parent(val),
             Node::Parent { next, .. } => next.push(val),
+        };
+    }
+
+    fn push_front(&mut self, val: T) {
+        if self.is_empty() {
+            return self.push(val);
+        }
+
+        let mut new_child = Node::Empty;
+        std::mem::swap(self, &mut new_child);
+
+        *self = Node::Parent {
+            value: val,
+            next: Box::new(new_child),
         };
     }
 
@@ -108,6 +126,10 @@ impl<T> Node<T> {
 
     fn is_tail(&self) -> bool {
         matches!(self, Node::Tail { .. })
+    }
+
+    fn is_empty(&self) -> bool {
+        matches!(self, Node::Empty)
     }
 
     fn value(self) -> T {
@@ -196,6 +218,42 @@ mod tests {
         under_test.push(3);
 
         assert_that(&under_test).is_equal_to(LinkedList::from(vec![1, 2, 3]));
+        assert_that(&under_test.size()).is_equal_to(3);
+    }
+
+    #[test]
+    fn pushes_to_front_of_empty_list() {
+        let mut under_test = LinkedList::new();
+
+        assert_that(&under_test.size()).is_equal_to(0);
+
+        under_test.push_front(1);
+
+        assert_that(&under_test).is_equal_to(LinkedList::from(vec![1]));
+        assert_that(&under_test.size()).is_equal_to(1);
+    }
+
+    #[test]
+    fn pushes_to_front_of_singleton_list() {
+        let mut under_test = LinkedList::from(vec![1]);
+
+        assert_that(&under_test.size()).is_equal_to(1);
+
+        under_test.push_front(2);
+
+        assert_that(&under_test).is_equal_to(LinkedList::from(vec![2, 1]));
+        assert_that(&under_test.size()).is_equal_to(2);
+    }
+
+    #[test]
+    fn pushes_to_front_of_multi_list() {
+        let mut under_test = LinkedList::from(vec![1, 2]);
+
+        assert_that(&under_test.size()).is_equal_to(2);
+
+        under_test.push_front(3);
+
+        assert_that(&under_test).is_equal_to(LinkedList::from(vec![3, 1, 2]));
         assert_that(&under_test.size()).is_equal_to(3);
     }
 
