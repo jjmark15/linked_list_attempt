@@ -40,6 +40,10 @@ impl<T> LinkedList<T> {
         self.node.pop()
     }
 
+    pub fn pop_front(&mut self) -> Option<T> {
+        self.node.pop_front()
+    }
+
     pub fn size(&self) -> usize {
         self.node.size()
     }
@@ -85,6 +89,22 @@ impl<T> Node<T> {
                 } else {
                     next.pop()
                 }
+            }
+        }
+    }
+
+    fn pop_front(&mut self) -> Option<T> {
+        match self {
+            Node::Empty => None,
+            Node::Tail { .. } => Some(self.to_empty()),
+            Node::Parent { next, .. } => {
+                let mut new_self = Box::new(Node::Empty);
+                std::mem::swap(next, &mut new_self);
+
+                let mut old_self = new_self;
+                std::mem::swap(self, &mut old_self);
+
+                Some(old_self.value())
             }
         }
     }
@@ -279,6 +299,31 @@ mod tests {
 
         assert_that(&under_test.size()).is_equal_to(2);
         assert_that(&under_test.pop()).contains(2);
+        assert_that(&under_test.size()).is_equal_to(1);
+    }
+
+    #[test]
+    fn returns_empty_when_empty_list_is_front_popped() {
+        let mut under_test: LinkedList<i32> = LinkedList::new();
+
+        assert_that(&under_test.pop_front()).is_none();
+    }
+
+    #[test]
+    fn returns_value_when_singleton_list_is_front_popped() {
+        let mut under_test = LinkedList::from(vec![1]);
+
+        assert_that(&under_test.size()).is_equal_to(1);
+        assert_that(&under_test.pop_front()).contains(1);
+        assert_that(&under_test.size()).is_equal_to(0);
+    }
+
+    #[test]
+    fn returns_value_when_multi_list_is_front_popped() {
+        let mut under_test = LinkedList::from(vec![1, 2]);
+
+        assert_that(&under_test.size()).is_equal_to(2);
+        assert_that(&under_test.pop_front()).contains(1);
         assert_that(&under_test.size()).is_equal_to(1);
     }
 }
