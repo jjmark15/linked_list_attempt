@@ -60,6 +60,12 @@ enum Node<T> {
     Parent { value: T, next: Box<Node<T>> },
 }
 
+impl<T> Default for Node<T> {
+    fn default() -> Self {
+        Node::Empty
+    }
+}
+
 impl<T> Node<T> {
     fn push(&mut self, val: T) {
         match self {
@@ -74,8 +80,7 @@ impl<T> Node<T> {
             return self.push(val);
         }
 
-        let mut new_child = Node::Empty;
-        std::mem::swap(self, &mut new_child);
+        let new_child = std::mem::take(self);
 
         *self = Node::Parent {
             value: val,
@@ -102,8 +107,7 @@ impl<T> Node<T> {
             Node::Empty => None,
             Node::Tail { .. } => Some(self.to_empty()),
             Node::Parent { next, .. } => {
-                let mut new_self = Box::new(Node::Empty);
-                std::mem::swap(next, &mut new_self);
+                let new_self = std::mem::take(next);
 
                 let mut old_self = new_self;
                 std::mem::swap(self, &mut old_self);
@@ -114,38 +118,24 @@ impl<T> Node<T> {
     }
 
     fn to_parent(&mut self, child_value: T) {
-        let mut placeholder = Node::Empty;
-        std::mem::swap(self, &mut placeholder);
-
-        let extracted_value = placeholder.value();
-
         *self = Node::Parent {
-            value: extracted_value,
+            value: self.to_empty(),
             next: Box::new(Node::Tail { value: child_value }),
         };
     }
 
     fn to_tail(&mut self) -> T {
-        let next = self.next().unwrap();
+        let popped_val = self.next().unwrap().to_empty();
 
-        let popped_val = next.pop().unwrap();
-
-        let mut placeholder = Node::Empty;
-        std::mem::swap(self, &mut placeholder);
-
-        let value = placeholder.value();
-
-        let mut tail_node = Node::Tail { value };
-        std::mem::swap(self, &mut tail_node);
+        *self = Node::Tail {
+            value: self.to_empty(),
+        };
 
         popped_val
     }
 
     fn to_empty(&mut self) -> T {
-        let mut placeholder = Node::Empty;
-        std::mem::swap(self, &mut placeholder);
-
-        placeholder.value()
+        std::mem::take(self).value()
     }
 
     fn is_tail(&self) -> bool {
