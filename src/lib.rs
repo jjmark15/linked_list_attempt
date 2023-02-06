@@ -3,6 +3,12 @@ pub struct LinkedList<T> {
     node: Node<T>,
 }
 
+impl<T> Default for LinkedList<T> {
+    fn default() -> Self {
+        LinkedList::new()
+    }
+}
+
 impl<T> LinkedList<T> {
     pub fn new() -> Self {
         LinkedList { node: Node::Empty }
@@ -19,11 +25,9 @@ impl<T> LinkedList<T> {
     pub fn to_vec(mut self) -> Vec<T> {
         let mut vec = vec![];
 
-        while let Some(value) = self.node.pop() {
+        while let Some(value) = self.node.pop_front() {
             vec.push(value);
         }
-
-        vec.reverse();
 
         vec
     }
