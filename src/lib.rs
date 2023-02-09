@@ -195,6 +195,11 @@ mod tests {
     }
 
     #[test]
+    fn collects_from_iterator() {
+        assert_that(&vec![1, 2].into_iter().collect()).is_equal_to(LinkedList::from(vec![1, 2]));
+    }
+
+    #[test]
     fn converts_vec_into_linked_list() {
         assert_that(&LinkedList::from(vec![1, 2, 3]).to_vec()).is_equal_to(vec![1, 2, 3]);
     }
